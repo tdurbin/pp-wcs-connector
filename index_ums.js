@@ -27,8 +27,6 @@ var ConversationV1 = require('watson-developer-cloud/conversation/v1');
 var MyCoolAgent = require('./MyCoolAgent');
 var request = require('request');
 var umsDialogToWatsonContext = {};
-//var context = {};
-//var dialogID = "";
 var answer = "";
 var sc_answer = "";
 var metadata = "";
@@ -74,14 +72,13 @@ var oauth = {
 };
 
 // Process the conversation response.
-function processResponse(err, response) {
+function processResponse(err, response, dialogID) {
     if (err) {
         console.error(err); // Oops - something went wrong.
         return;
     }
 
     umsDialogToWatsonContext[dialogID] = response.context;
-//    context = response.context;
 
     if (response.output.text.length != 0) {
 
@@ -241,7 +238,6 @@ function processResponse(err, response) {
 echoAgent.on('MyCoolAgent.ContentEvent', (contentEvent) => {
 
     greenlight = 1;
-    dialogID = contentEvent.dialogId;
 
     console.log("Sending message: " + contentEvent.message);
     message = contentEvent.message;
@@ -254,7 +250,9 @@ echoAgent.on('MyCoolAgent.ContentEvent', (contentEvent) => {
                     text: message
                 },
                 context : umsDialogToWatsonContext[contentEvent.dialogId]
-            }, processResponse);
+            }, (err, res) => {
+                processResponse(err, res, contentEvent.dialogId);
+            });
             greenlight = 0;
         }
     }, 100); //Pause for 100 milliseconds so only the last utterance from the customer is processed.
